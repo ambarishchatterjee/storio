@@ -1,3 +1,4 @@
+import toast from "react-hot-toast";
 import { useAuthContext } from "./useAuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -8,6 +9,7 @@ export const useLogout = () => {
   const logout = () => {
     localStorage.removeItem("user");
     dispatch({ type: "LOGOUT" });
+    toast.success("Logout successfully")
     navigate("/login"); // redirect
   };
 

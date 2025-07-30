@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Trash, UploadCloud, FolderPlus } from "lucide-react";
 import { getImage } from "../../api/api";
+import toast from "react-hot-toast";
 
 const API = "http://localhost:8001/api"; // Update as needed
-const token = JSON.parse(localStorage.getItem("user"))?.token;
+
+
 
 export default function FilesPage() {
   const [folders, setFolders] = useState([]);
@@ -13,19 +15,33 @@ export default function FilesPage() {
   const [fileUpload, setFileUpload] = useState(null);
   const [selectedFolder, setSelectedFolder] = useState("");
 
-  const headers = {
+  const getAuthHeaders = () => {
+  const token =
+    localStorage.getItem("user") &&
+    JSON.parse(localStorage.getItem("user")).token;
+
+  return {
     headers: { Authorization: `Bearer ${token}` },
   };
+};
+
 
   const fetchDashboard = async () => {
     try {
-      const { data } = await axios.get(`${API}/allfiles`, headers);
+      const token =
+        localStorage.getItem("user") &&
+        JSON.parse(localStorage.getItem("user")).token;
 
-      setFolders(data.folders || []); // fallback to empty array
+      const { data } = await axios.get(`${API}/allfiles`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setFolders(data.folders || []);
       setFiles(data.files || []);
     } catch (err) {
+        toast.error("Error fetching dashboard:", err.message)
       console.error("Error fetching dashboard:", err.message);
-      setFolders([]); // fallback in case of error
+      setFolders([]);
       setFiles([]);
     }
   };
@@ -36,7 +52,8 @@ export default function FilesPage() {
 
   const handleCreateFolder = async () => {
     if (!folderName.trim()) return;
-    await axios.post(`${API}/folders`, { name: folderName }, headers);
+    await axios.post(`${API}/folders`, { name: folderName }, getAuthHeaders());
+    toast.success("Folder created");
     setFolderName("");
     fetchDashboard();
   };
@@ -49,23 +66,23 @@ export default function FilesPage() {
     formData.append("folderId", selectedFolder);
 
     await axios.post(`${API}/files`, formData, {
-      headers: {
-        ...headers.headers,
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
+  ...getAuthHeaders(),
+  "Content-Type": "multipart/form-data",
+});
+    toast.success("File uploaded successfully");
     setFileUpload(null);
     fetchDashboard();
   };
 
   const deleteFolder = async (id) => {
-    await axios.delete(`${API}/folders/${id}`, headers);
+    await axios.delete(`${API}/folders/${id}`, getAuthHeaders());
+    toast.success("Folder Deleted successfully");
     fetchDashboard();
   };
 
   const deleteFile = async (id) => {
-    await axios.delete(`${API}/files/${id}`, headers);
+    await axios.delete(`${API}/files/${id}`, getAuthHeaders());
+    toast.success("File Deleted successfully");
     fetchDashboard();
   };
 

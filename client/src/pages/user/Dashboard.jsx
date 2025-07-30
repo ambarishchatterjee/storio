@@ -21,10 +21,13 @@ export default function DashboardPage() {
         const res = await axios.get("http://localhost:8001/api/dashboard", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log(res);
-        
-        toast.success(res.message)
+
         setStats(res.data);
+        // ✅ Only show toast if not shown before in this session
+        if (!sessionStorage.getItem("dashboardToastShown")) {
+          toast.success(res.data.message);
+          sessionStorage.setItem("dashboardToastShown", "true");
+        }
       } catch (err) {
         toast.error("Failed to load dashboard stats", err);
       }
@@ -32,10 +35,18 @@ export default function DashboardPage() {
 
     fetchData();
   }, []);
-  
 
   const { user } = useAuthContext();
   const userData = user.user;
+
+  const usedStorage = Math.max(userData?.usedStorage || 0, 0); // Prevent negative or undefined
+  const totalStorage = userData?.storageLimit || 0;
+
+  const usedInGB = usedStorage / (1024 * 1024 * 1024);
+  const totalInGB = totalStorage / (1024 * 1024 * 1024);
+
+  const usedGB = usedInGB < 0.1 ? usedInGB.toPrecision(2) : usedInGB.toFixed(2);
+  const totalGB = totalInGB.toFixed(2);
 
   return (
     <div className="space-y-10 pb-10">
@@ -47,7 +58,8 @@ export default function DashboardPage() {
         <StatCard
           icon={<Cloud />}
           title="Used Storage"
-          value={`${(userData.usedStorage / (1024 * 1024 * 1024)).toFixed(2)} GB / ${(userData.storageLimit / (1024 * 1024 * 1024)).toFixed(2)} GB`}
+          value={`${usedGB} GB / ${totalGB} GB`}
+          progress={(usedStorage / totalStorage) * 100}
         />
         <StatCard
           icon={<Upload className="text-green-500" />}
@@ -61,10 +73,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <Plans/>
-
-
-
+      <Plans />
 
       {/* Recent Uploads */}
       <section className="bg-white p-6 rounded-xl shadow-sm">
@@ -75,21 +84,18 @@ export default function DashboardPage() {
               key={idx}
               className="flex items-center justify-between border-b pb-2"
             >
-                    
               <div className="flex items-center gap-3">
                 {/* ✅ Thumbnail Preview */}
-              {file.mimetype && file.mimetype.startsWith("image/") ? (
-                <img
-                  src={`${getImage(file.thumb)}`}
-                  alt={file.filename}
-                  className="w-16 h-16 object-cover rounded"
-                />
-              ) : (
-                <FileText size={64} />
-               
-                
-              )}
-                <div >
+                {file.mimetype && file.mimetype.startsWith("image/") ? (
+                  <img
+                    src={`${getImage(file.thumb)}`}
+                    alt={file.filename}
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                ) : (
+                  <FileText size={64} />
+                )}
+                <div>
                   <p className="text-sm font-medium">{file.name}</p>
                   <p className="text-xs text-gray-500">
                     {formatDistanceToNow(new Date(file.uploaded), {

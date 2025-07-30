@@ -50,10 +50,44 @@ exports.getDashboard = async (req, res) => {
 };
 
 exports.deleteFolder = async (req, res) => {
-  await Folder.findByIdAndDelete(req.params.id);
-  await File.deleteMany({ folder: req.params.id });
-  res.json({ message: 'Folder and its files deleted' });
+  try {
+    const folderId = req.params.id;
+
+    // Find all files under this folder
+    const files = await File.find({ folder: folderId });
+
+    // Delete each file from filesystem and update user storage
+    for (const file of files) {
+      const filePath = path.join(__dirname, "..", "public", file.path);
+
+      // Remove physical file
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (err) {
+        console.error("Error deleting file from disk:", filePath, err.message);
+      }
+
+      // Reduce user storage
+      await User.findByIdAndUpdate(file.user, {
+        $inc: { usedStorage: -file.size },
+      });
+    }
+
+    // Delete all file entries from DB
+    await File.deleteMany({ folder: folderId });
+
+    // Delete the folder itself
+    await Folder.findByIdAndDelete(folderId);
+
+    res.json({ message: "Folder and its files deleted successfully" });
+  } catch (err) {
+    console.error("Folder deletion failed:", err.message);
+    res.status(500).json({ error: "Failed to delete folder and its files" });
+  }
 };
+
 
 exports.deleteFile = async (req, res) => {
   try {

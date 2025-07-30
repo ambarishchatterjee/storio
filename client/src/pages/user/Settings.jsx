@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { getImage } from "../../api/api";
+import toast from "react-hot-toast";
 
 export default function Settings() {
   const { user } = useAuthContext();
@@ -45,7 +46,7 @@ export default function Settings() {
     });
 
     const data = await res.json();
-    alert(data.message);
+    toast.success(data.message);
   };
 
   const handleChangePassword = async (e) => {
@@ -64,7 +65,7 @@ export default function Settings() {
     });
 
     const data = await res.json();
-    alert(data.message);
+    toast.success(data.message);
   };
 
   return (
