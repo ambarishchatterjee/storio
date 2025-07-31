@@ -153,7 +153,7 @@ export default function Settings() {
         </p>
         <p>
           <strong>Used Storage:</strong>{" "}
-          {(user?.user?.usedStorage / (1024 * 1024 * 1024)).toFixed(2)} GB
+          {Math.max((user?.user?.usedStorage / (1024 * 1024 * 1024)).toFixed(2) || 0, 0)} GB
         </p>
         <p>
           <strong>Storage Limit:</strong>{" "}

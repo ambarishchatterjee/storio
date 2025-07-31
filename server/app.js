@@ -2,7 +2,6 @@ require('dotenv').config({quiet: true})
 const express = require("express")
 const dbConnect = require('./app/config/dbConfig')
 const path = require('path')
-const flash = require('connect-flash')
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
@@ -27,18 +26,6 @@ app.use(express.static('public')); // just in case
 // 👇 This will expose `public/uploads` at `/uploads` in the URL
 app.use('/uploads', express.static(path.join(__dirname, 'app/public/uploads')));
 
-
-// Flash message middleware
-// app.use(flash());
-// app.use((req, res, next) => {
-//   res.locals.success = req.flash('success');
-//   res.locals.error = req.flash('error');
-//   next();
-// });
-app.use((req, res, next) => {
-  console.log("Body:", req.body);
-  next();
-});
 //Routes
 const authRouter = require('./app/routes/authRouter')
 const dashboardRouter = require('./app/routes/dashboardRouter')

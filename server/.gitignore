@@ -12,6 +12,8 @@
 /uploads
 /app/public/*
 */public/*
+app/public/
+public
 
 # testing
 /coverage
